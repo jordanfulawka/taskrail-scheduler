@@ -1,0 +1,63 @@
+package ca.jordanfulawka.taskrail.persistence;
+
+import ca.jordanfulawka.taskrail.core.Job;
+import ca.jordanfulawka.taskrail.core.JobStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.util.List;
+
+@Repository
+public class JobRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+    private final JsonMapper jsonMapper;
+    private final RowMapper<Job> jobMapper;
+
+    public JobRepository(JdbcTemplate jdbcTemplate, JsonMapper jsonMapper) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.jsonMapper = jsonMapper;
+        this.jobMapper = (rs, rowNum) -> new Job(
+                rs.getLong("id"),
+                rs.getString("type"),
+                JobStatus.valueOf(rs.getString("status")),
+                jsonMapper.readTree(rs.getString("payload"))
+        );
+    }
+
+    public Job insert(String type, JsonNode payload, JobStatus status) {
+        return jdbcTemplate.queryForObject(
+                "INSERT INTO jobs (type, payload, status) VALUES (?, ?::jsonb, ?) RETURNING *",
+                jobMapper, type, jsonMapper.writeValueAsString(payload), status.name());
+    }
+
+    public Job findById(long id) {
+        return jdbcTemplate.queryForObject(
+                "SELECT * FROM jobs WHERE id = ?", jobMapper, id
+        );
+    }
+
+    public List<Job> findByStatus(JobStatus status) {
+        return jdbcTemplate.query(
+                "SELECT * FROM jobs where status = ?", jobMapper, status.name()
+        );
+    }
+
+    public int markSucceeded(long id) {
+        return jdbcTemplate.update("UPDATE jobs SET status = 'SUCCEEDED', updated_at = now()" +
+                " WHERE id = ?", id);
+    }
+
+    public int markFailed(long id) {
+        return jdbcTemplate.update("UPDATE jobs SET status = 'FAILED' updated_at = now() " +
+                "WHERE id = ?", id);
+    }
+
+
+
+
+
+}
