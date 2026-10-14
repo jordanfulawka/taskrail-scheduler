@@ -3,7 +3,7 @@ services:
     image: 'postgres:16'
     environment:
       - 'POSTGRES_DB=taskrail'
-      - 'POSTGRES_PASSWORD=tailrail'
+      - 'POSTGRES_PASSWORD=taskrail'
       - 'POSTGRES_USER=taskrail'
     ports:
       - '5432:5432'
