@@ -9,6 +9,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class JobRepository {
@@ -52,8 +53,16 @@ public class JobRepository {
     }
 
     public int markFailed(long id) {
-        return jdbcTemplate.update("UPDATE jobs SET status = 'FAILED' updated_at = now() " +
+        return jdbcTemplate.update("UPDATE jobs SET status = 'FAILED', updated_at = now() " +
                 "WHERE id = ?", id);
+    }
+
+    public Optional<Job> claimNext() {
+        List<Job> jobList = jdbcTemplate.query("UPDATE jobs SET status = 'RUNNING', updated_at = now() WHERE id = " +
+                "(SELECT id FROM jobs WHERE status = 'PENDING' AND run_at <= now() ORDER BY run_at, id LIMIT 1 " +
+                "FOR UPDATE SKIP LOCKED) RETURNING *", jobMapper);
+
+        return jobList.stream().findFirst();
     }
 
 
