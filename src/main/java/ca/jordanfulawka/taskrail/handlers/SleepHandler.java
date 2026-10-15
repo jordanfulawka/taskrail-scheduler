@@ -18,5 +18,6 @@ public class SleepHandler implements JobHandler {
     @Override
     public void handle(JsonNode payload) throws Exception {
         Thread.sleep(sleepTime);
+        System.out.println("Sleepy has completed!");
     }
 }

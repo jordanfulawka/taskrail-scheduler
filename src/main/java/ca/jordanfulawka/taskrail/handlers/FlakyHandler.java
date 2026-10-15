@@ -18,5 +18,6 @@ public class FlakyHandler implements JobHandler {
         int randomInt = random.nextInt(100);
 
         if(randomInt < 60) throw new RuntimeException("Flaky throwing an exception");
+        else System.out.println("Flaky has succeeded");
     }
 }

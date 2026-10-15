@@ -26,6 +26,7 @@ public class Worker {
     }
 
     private void poll() {
+
         try {
             jobRepository.claimNext().ifPresent(job -> {
                 try {

@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,14 +28,16 @@ public class JobRepository {
                 rs.getLong("id"),
                 rs.getString("type"),
                 JobStatus.valueOf(rs.getString("status")),
-                jsonMapper.readTree(rs.getString("payload"))
+                jsonMapper.readTree(rs.getString("payload")),
+                rs.getObject("run_at", OffsetDateTime.class).toInstant()
         );
     }
 
-    public Job insert(String type, JsonNode payload, JobStatus status) {
+    public Job insert(String type, JsonNode payload, Instant runAt) {
+        OffsetDateTime runAtValue = runAt == null ? null : runAt.atOffset(ZoneOffset.UTC);
         return jdbcTemplate.queryForObject(
-                "INSERT INTO jobs (type, payload, status) VALUES (?, ?::jsonb, ?) RETURNING *",
-                jobMapper, type, jsonMapper.writeValueAsString(payload), status.name());
+                "INSERT INTO jobs (type, payload, run_at) VALUES (?, ?::jsonb, COALESCE(?::timestamptz, now())) RETURNING *",
+                jobMapper, type, jsonMapper.writeValueAsString(payload), runAtValue);
     }
 
     public Job findById(long id) {
