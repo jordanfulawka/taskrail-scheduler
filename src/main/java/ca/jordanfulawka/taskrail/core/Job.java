@@ -9,11 +9,13 @@ public record Job(
         String type,
         JobStatus status,
         JsonNode payload,
-        Instant runAt
-//        int attempts,
-//        int maxAttempts,
-//        String lockedBy,
-//        Instant lockedUntil,
-//        String lastError
+        Instant runAt,
+        int attempts,
+        int maxAttempts,
+        String lockedBy,
+        Instant lockedUntil,
+        String lastError,
+        Instant createdAt,
+        Instant updatedAt
 ) {
 }

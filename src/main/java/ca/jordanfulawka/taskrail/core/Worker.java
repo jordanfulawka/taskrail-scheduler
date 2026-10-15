@@ -32,9 +32,10 @@ public class Worker {
                 try {
                     handlerRegistry.get(job.type()).handle(job.payload());
                     jobRepository.markSucceeded(job.id());
+                    System.out.println("ID " + job.id() + ": Job of type " + job.type() + " has completed");
                 } catch (Exception e) {
                     System.err.println("Job " + job.id() + " failed: " + e.getMessage());
-                    jobRepository.markFailed(job.id());
+                    jobRepository.markFailed(job.id(), e.getMessage());
                 }
             });
         } catch (Exception e) {

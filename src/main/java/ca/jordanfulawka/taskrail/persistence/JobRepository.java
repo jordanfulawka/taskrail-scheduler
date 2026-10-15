@@ -29,8 +29,16 @@ public class JobRepository {
                 rs.getString("type"),
                 JobStatus.valueOf(rs.getString("status")),
                 jsonMapper.readTree(rs.getString("payload")),
-                rs.getObject("run_at", OffsetDateTime.class).toInstant()
-        );
+                rs.getObject("run_at", OffsetDateTime.class).toInstant(),
+                rs.getInt("attempts"),
+                rs.getInt("max_attempts"),
+                rs.getString("locked_by"),
+                rs.getObject("locked_until", OffsetDateTime.class) == null
+                        ? null
+                        : rs.getObject("locked_until", OffsetDateTime.class).toInstant(),
+                rs.getString("last_error"),
+                rs.getObject("created_at", OffsetDateTime.class).toInstant(),
+                rs.getObject("updated_at", OffsetDateTime.class).toInstant());
     }
 
     public Job insert(String type, JsonNode payload, Instant runAt) {
@@ -51,14 +59,14 @@ public class JobRepository {
         );
     }
 
-    public int markSucceeded(long id) {
-        return jdbcTemplate.update("UPDATE jobs SET status = 'SUCCEEDED', updated_at = now()" +
+    public void markSucceeded(long id) {
+        jdbcTemplate.update("UPDATE jobs SET status = 'SUCCEEDED', updated_at = now()" +
                 " WHERE id = ?", id);
     }
 
-    public int markFailed(long id) {
-        return jdbcTemplate.update("UPDATE jobs SET status = 'FAILED', updated_at = now() " +
-                "WHERE id = ?", id);
+    public void markFailed(long id, String lastError) {
+        jdbcTemplate.update("UPDATE jobs SET status = 'FAILED', updated_at = now(), last_error = ? " +
+                "WHERE id = ?", lastError, id);
     }
 
     public Optional<Job> claimNext() {
