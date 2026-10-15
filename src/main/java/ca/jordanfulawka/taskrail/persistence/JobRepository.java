@@ -40,10 +40,9 @@ public class JobRepository {
                 jobMapper, type, jsonMapper.writeValueAsString(payload), runAtValue);
     }
 
-    public Job findById(long id) {
-        return jdbcTemplate.queryForObject(
-                "SELECT * FROM jobs WHERE id = ?", jobMapper, id
-        );
+    public Optional<Job> findById(long id) {
+        List<Job> jobList = jdbcTemplate.query("SELECT * FROM jobs WHERE id = ?", jobMapper, id);
+        return jobList.stream().findFirst();
     }
 
     public List<Job> findByStatus(JobStatus status) {
@@ -66,9 +65,10 @@ public class JobRepository {
         List<Job> jobList = jdbcTemplate.query("UPDATE jobs SET status = 'RUNNING', updated_at = now() WHERE id = " +
                 "(SELECT id FROM jobs WHERE status = 'PENDING' AND run_at <= now() ORDER BY run_at, id LIMIT 1 " +
                 "FOR UPDATE SKIP LOCKED) RETURNING *", jobMapper);
-
         return jobList.stream().findFirst();
     }
+
+
 
 
 

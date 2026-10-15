@@ -38,7 +38,6 @@ public class Worker {
                 }
             });
         } catch (Exception e) {
-//            System.out.println("Error!!");
             e.printStackTrace();
         }
     }
