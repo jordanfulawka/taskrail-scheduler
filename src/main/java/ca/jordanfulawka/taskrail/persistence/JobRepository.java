@@ -59,20 +59,23 @@ public class JobRepository {
         );
     }
 
-    public void markSucceeded(long id) {
+    public void markSucceeded(long id, String workerName) {
         jdbcTemplate.update("UPDATE jobs SET status = 'SUCCEEDED', updated_at = now()" +
-                " WHERE id = ?", id);
+                " WHERE id = ? AND locked_by = ?", id, workerName);
     }
 
-    public void markFailed(long id, String lastError) {
+    public void markFailed(long id, String lastError, String workerName) {
         jdbcTemplate.update("UPDATE jobs SET status = 'FAILED', updated_at = now(), last_error = ? " +
-                "WHERE id = ?", lastError, id);
+                "WHERE id = ? and locked_by = ?", lastError, id, workerName);
     }
 
-    public Optional<Job> claimNext() {
-        List<Job> jobList = jdbcTemplate.query("UPDATE jobs SET status = 'RUNNING', updated_at = now() WHERE id = " +
+    public Optional<Job> claimNext(String workerName) {
+        List<Job> jobList = jdbcTemplate.query("UPDATE jobs " +
+                "SET status = 'RUNNING', locked_by = ?, " +
+                "locked_until = now() + interval '30 seconds', updated_at = now(), attempts = attempts + 1 " +
+                "WHERE id = " +
                 "(SELECT id FROM jobs WHERE status = 'PENDING' AND run_at <= now() ORDER BY run_at, id LIMIT 1 " +
-                "FOR UPDATE SKIP LOCKED) RETURNING *", jobMapper);
+                "FOR UPDATE SKIP LOCKED) RETURNING *", jobMapper, workerName);
         return jobList.stream().findFirst();
     }
 
