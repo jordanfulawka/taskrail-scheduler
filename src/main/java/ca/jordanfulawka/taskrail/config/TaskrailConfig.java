@@ -31,7 +31,7 @@ public class TaskrailConfig {
 
     @Bean(initMethod = "start", destroyMethod = "stop")
     public Worker worker(JobRepository jobRepository, HandlerRegistry handlerRegistry) {
-        return new Worker(jobRepository, handlerRegistry);
+        return new Worker(jobRepository, handlerRegistry, 3);
     }
 
 
