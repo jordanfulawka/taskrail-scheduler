@@ -21,7 +21,7 @@ public class TaskrailConfig {
 
     @Bean
     public SleepHandler sleepHandler() {
-        return new SleepHandler(1000);
+        return new SleepHandler();
     }
 
     @Bean

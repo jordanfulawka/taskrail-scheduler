@@ -14,10 +14,20 @@ public class FlakyHandler implements JobHandler {
     @Override
     public void handle(JsonNode payload) throws Exception {
 
-        Random random = new Random();
-        int randomInt = random.nextInt(100);
+        JsonNode failRate = payload.path("failRate");
+        if(failRate.isMissingNode()) {
+            throw new RuntimeException("failRate parameter not given");
+        }
+        if(!failRate.isNumber()) {
+            throw new RuntimeException("Invalid payload type");
+        }
 
-        if(randomInt < 60) throw new RuntimeException("Flaky throwing an exception");
-        else System.out.println("Flaky has succeeded");
+        Random random = new Random();
+        int randomValue = random.nextInt();
+
+        if(randomValue < failRate.doubleValue() * 100) {
+            throw new RuntimeException("Flaky is throwing a controlled exception");
+        }
+        System.out.println("Flaky has completed successfully");
     }
 }

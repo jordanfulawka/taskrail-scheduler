@@ -52,7 +52,11 @@ public class Worker {
             if(semaphore.tryAcquire()) {
                 Optional<Job> job = jobRepository.claimNext(workerName);
                 if(job.isPresent()) {
-                    jobPool.execute(() -> jobHandler(job.get()));
+                    try {
+                        jobPool.execute(() -> jobHandler(job.get()));
+                    } catch (RuntimeException e) {
+                        System.out.println(e.getMessage());
+                    }
                 } else {
                     semaphore.release();
                 }

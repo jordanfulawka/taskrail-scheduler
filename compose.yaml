@@ -7,7 +7,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - DB_URL=${DB_URL}
+      - DB_URL=jdbc:postgresql://postgres:5432/${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
   postgres:
@@ -21,7 +21,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "taskrail"]
+      test: ["CMD", "pg_isready", "-U",  "${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
