@@ -73,7 +73,8 @@ public class Worker {
             jobRepository.markSucceeded(job.id(), workerName);
             System.out.println("ID " + job.id() + ": Job of type " + job.type() + " has completed");
         } catch (Exception e) {
-            System.err.println("Job " + job.id() + " failed: " + e.getMessage());
+//            System.err.println("Job " + job.id() + " failed: " + e.getMessage());
+            System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed. " + e.getMessage());
             jobRepository.markFailed(job.id(), e.getMessage(), workerName);
         } finally {
             semaphore.release();

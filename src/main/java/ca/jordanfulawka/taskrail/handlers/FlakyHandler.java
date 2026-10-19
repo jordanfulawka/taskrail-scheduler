@@ -28,6 +28,5 @@ public class FlakyHandler implements JobHandler {
         if(randomValue < failRate.doubleValue() * 100) {
             throw new RuntimeException("Flaky is throwing a controlled exception");
         }
-        System.out.println("Flaky has completed successfully");
     }
 }

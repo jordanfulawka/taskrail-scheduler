@@ -2,6 +2,7 @@ package ca.jordanfulawka.taskrail.config;
 
 import ca.jordanfulawka.taskrail.core.HandlerRegistry;
 import ca.jordanfulawka.taskrail.core.Worker;
+import ca.jordanfulawka.taskrail.handlers.EmailHandler;
 import ca.jordanfulawka.taskrail.handlers.FlakyHandler;
 import ca.jordanfulawka.taskrail.handlers.JobHandler;
 import ca.jordanfulawka.taskrail.handlers.SleepHandler;
@@ -27,6 +28,11 @@ public class TaskrailConfig {
     @Bean
     public FlakyHandler flakyHandler() {
         return new FlakyHandler();
+    }
+
+    @Bean
+    public EmailHandler emailHandler() {
+        return new EmailHandler();
     }
 
     @Bean(initMethod = "start", destroyMethod = "stop")
