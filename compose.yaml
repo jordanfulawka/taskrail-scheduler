@@ -1,14 +1,29 @@
 services:
+  worker:
+    build: .
+    ports:
+      - "8080-8082:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
   postgres:
     image: 'postgres:16'
     environment:
-      - 'POSTGRES_DB=taskrail'
-      - 'POSTGRES_PASSWORD=taskrail'
-      - 'POSTGRES_USER=taskrail'
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=${DB_USER}
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql
-
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "taskrail"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 volumes:
   postgres_data:

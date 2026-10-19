@@ -35,7 +35,6 @@ public class Worker {
     public void stop() {
 
         try {
-
             scheduler.shutdown();
             jobPool.shutdown();
             if(!jobPool.awaitTermination(30, TimeUnit.SECONDS)) {
