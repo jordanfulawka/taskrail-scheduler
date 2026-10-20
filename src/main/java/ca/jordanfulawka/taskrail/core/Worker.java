@@ -1,5 +1,7 @@
 package ca.jordanfulawka.taskrail.core;
 
+import ca.jordanfulawka.taskrail.exceptions.PermanentJobException;
+import ca.jordanfulawka.taskrail.exceptions.RetryableJobException;
 import ca.jordanfulawka.taskrail.persistence.JobRepository;
 
 import java.net.InetAddress;
@@ -72,11 +74,15 @@ public class Worker {
             handlerRegistry.get(job.type()).handle(job.payload());
             jobRepository.markSucceeded(job.id(), workerName);
             System.out.println("ID " + job.id() + ": Job of type " + job.type() + " has completed");
-        } catch (Exception e) {
-//            System.err.println("Job " + job.id() + " failed: " + e.getMessage());
-            System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed. " + e.getMessage());
+        } catch (PermanentJobException e) {
+            System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed permanently. " + e.getMessage());
             jobRepository.markFailed(job.id(), e.getMessage(), workerName);
-        } finally {
+        } catch (RetryableJobException e) {
+            System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed temporarily. " + e.getMessage());
+            jobRepository.markPending(job.id(), e.getMessage(), workerName);
+        } catch (Exception e) {
+            System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has had an unknown failure " + e.getMessage());
+        }  finally {
             semaphore.release();
         }
     }

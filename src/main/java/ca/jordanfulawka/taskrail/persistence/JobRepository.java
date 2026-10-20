@@ -69,6 +69,11 @@ public class JobRepository {
                 "WHERE id = ? and locked_by = ?", lastError, id, workerName);
     }
 
+    public void markPending(long id, String lastError, String workerName) {
+        jdbcTemplate.update("UPDATE jobs SET status = 'PENDING', updated_at = now(), attempts = attempts + 1, last_error = ? " +
+                "WHERE id = ? and locked_by = ?", lastError, id, workerName);
+    }
+
     public Optional<Job> claimNext(String workerName) {
         List<Job> jobList = jdbcTemplate.query("UPDATE jobs " +
                 "SET status = 'RUNNING', locked_by = ?, " +

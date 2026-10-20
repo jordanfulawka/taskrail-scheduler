@@ -1,7 +1,7 @@
 package ca.jordanfulawka.taskrail.core;
 
 public enum JobStatus {
-    PENDING, RUNNING, SUCCEEDED, FAILED;
+    PENDING, RUNNING, SUCCEEDED, FAILED, DEAD;
 
     public static boolean isValidJobStatus(String status) {
         for(JobStatus jobStatus : values()) {
