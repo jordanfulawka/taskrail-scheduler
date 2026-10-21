@@ -5,6 +5,7 @@ import ca.jordanfulawka.taskrail.core.JobStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -20,8 +21,10 @@ public class JobRepository {
     private final JdbcTemplate jdbcTemplate;
     private final JsonMapper jsonMapper;
     private final RowMapper<Job> jobMapper;
+    private final JobRunRepository jobRunRepository;
 
-    public JobRepository(JdbcTemplate jdbcTemplate, JsonMapper jsonMapper) {
+    public JobRepository(JdbcTemplate jdbcTemplate, JsonMapper jsonMapper, JobRunRepository jobRunRepository) {
+        this.jobRunRepository = jobRunRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.jsonMapper = jsonMapper;
         this.jobMapper = (rs, rowNum) -> new Job(
@@ -59,19 +62,25 @@ public class JobRepository {
         );
     }
 
-    public void markSucceeded(long id, String workerName) {
+    @Transactional
+    public void markSucceeded(long id, String workerName, long jobRunId) {
         jdbcTemplate.update("UPDATE jobs SET status = 'SUCCEEDED', updated_at = now()" +
                 " WHERE id = ? AND locked_by = ?", id, workerName);
+        jobRunRepository.updateRun(jobRunId, JobStatus.SUCCEEDED);
     }
 
-    public void markFailed(long id, String lastError, String workerName) {
+    @Transactional
+    public void markFailed(long id, String lastError, String workerName, long jobRunId) {
         jdbcTemplate.update("UPDATE jobs SET status = 'FAILED', updated_at = now(), last_error = ? " +
                 "WHERE id = ? and locked_by = ?", lastError, id, workerName);
+        jobRunRepository.updateRun(jobRunId, JobStatus.FAILED, lastError, "PERMANENT");
     }
 
-    public void markPending(long id, String lastError, String workerName) {
-        jdbcTemplate.update("UPDATE jobs SET status = 'PENDING', updated_at = now(), attempts = attempts + 1, last_error = ? " +
+    @Transactional
+    public void markPending(long id, String lastError, String workerName, long jobRunId) {
+        jdbcTemplate.update("UPDATE jobs SET status = 'PENDING', updated_at = now(), last_error = ? " +
                 "WHERE id = ? and locked_by = ?", lastError, id, workerName);
+        jobRunRepository.updateRun(jobRunId, JobStatus.FAILED, lastError, "TEMPORARY");
     }
 
     public Optional<Job> claimNext(String workerName) {
@@ -83,11 +92,6 @@ public class JobRepository {
                 "FOR UPDATE SKIP LOCKED) RETURNING *", jobMapper, workerName);
         return jobList.stream().findFirst();
     }
-
-
-
-
-
 
 
 }

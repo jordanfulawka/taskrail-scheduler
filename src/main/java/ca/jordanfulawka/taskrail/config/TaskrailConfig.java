@@ -7,6 +7,7 @@ import ca.jordanfulawka.taskrail.handlers.FlakyHandler;
 import ca.jordanfulawka.taskrail.handlers.JobHandler;
 import ca.jordanfulawka.taskrail.handlers.SleepHandler;
 import ca.jordanfulawka.taskrail.persistence.JobRepository;
+import ca.jordanfulawka.taskrail.persistence.JobRunRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -36,8 +37,8 @@ public class TaskrailConfig {
     }
 
     @Bean(initMethod = "start", destroyMethod = "stop")
-    public Worker worker(JobRepository jobRepository, HandlerRegistry handlerRegistry) {
-        return new Worker(jobRepository, handlerRegistry, 3);
+    public Worker worker(JobRepository jobRepository, JobRunRepository jobRunRepository, HandlerRegistry handlerRegistry) {
+        return new Worker(jobRepository, jobRunRepository,handlerRegistry, 3);
     }
 
 

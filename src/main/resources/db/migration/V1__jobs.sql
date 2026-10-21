@@ -13,3 +13,15 @@ CREATE TABLE jobs (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX jobs_due_idx ON jobs (run_at) WHERE status = 'PENDING';
+
+CREATE TABLE job_runs_log (
+    id BIGSERIAL PRIMARY KEY,
+    job_id BIGINT REFERENCES jobs(id),
+    attempt SMALLINT,
+    worker_name TEXT,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    finished_at TIMESTAMPTZ,
+    outcome TEXT,
+    error_message TEXT,
+    error_type TEXT
+);

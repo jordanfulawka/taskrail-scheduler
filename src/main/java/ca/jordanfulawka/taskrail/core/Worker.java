@@ -3,6 +3,7 @@ package ca.jordanfulawka.taskrail.core;
 import ca.jordanfulawka.taskrail.exceptions.PermanentJobException;
 import ca.jordanfulawka.taskrail.exceptions.RetryableJobException;
 import ca.jordanfulawka.taskrail.persistence.JobRepository;
+import ca.jordanfulawka.taskrail.persistence.JobRunRepository;
 
 import java.net.InetAddress;
 import java.util.Optional;
@@ -12,14 +13,16 @@ import java.util.concurrent.*;
 public class Worker {
 
     private final JobRepository jobRepository;
+    private final JobRunRepository jobRunRepository;
     private final HandlerRegistry handlerRegistry;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private final ExecutorService jobPool;
     private final Semaphore semaphore;
     private String workerName;
 
-    public Worker(JobRepository jobRepository, HandlerRegistry handlerRegistry, int N) {
+    public Worker(JobRepository jobRepository, JobRunRepository jobRunRepository,HandlerRegistry handlerRegistry, int N) {
         this.jobRepository = jobRepository;
+        this.jobRunRepository = jobRunRepository;
         this.handlerRegistry = handlerRegistry;
         this.semaphore = new Semaphore(N);
         this.jobPool = Executors.newFixedThreadPool(N);
@@ -70,16 +73,17 @@ public class Worker {
     }
 
     private void jobHandler(Job job) {
+        long jobRunId = jobRunRepository.startRun(job.id(), job.attempts(), workerName);
         try {
             handlerRegistry.get(job.type()).handle(job.payload());
-            jobRepository.markSucceeded(job.id(), workerName);
+            jobRepository.markSucceeded(job.id(), workerName, jobRunId);
             System.out.println("ID " + job.id() + ": Job of type " + job.type() + " has completed");
         } catch (PermanentJobException e) {
             System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed permanently. " + e.getMessage());
-            jobRepository.markFailed(job.id(), e.getMessage(), workerName);
+            jobRepository.markFailed(job.id(), e.getMessage(), workerName, jobRunId);
         } catch (RetryableJobException e) {
             System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed temporarily. " + e.getMessage());
-            jobRepository.markPending(job.id(), e.getMessage(), workerName);
+            jobRepository.markPending(job.id(), e.getMessage(), workerName, jobRunId);
         } catch (Exception e) {
             System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has had an unknown failure " + e.getMessage());
         }  finally {
