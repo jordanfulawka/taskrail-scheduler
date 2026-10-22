@@ -1,6 +1,9 @@
 package ca.jordanfulawka.taskrail.handlers;
 
+import ca.jordanfulawka.taskrail.exceptions.InvalidPayloadException;
 import tools.jackson.databind.JsonNode;
+
+record SleepSchema(int ms) {};
 
 public class SleepHandler implements JobHandler {
 
@@ -10,18 +13,27 @@ public class SleepHandler implements JobHandler {
     }
 
     @Override
+    public boolean validate(JsonNode payload) {
+        try {
+            JsonValidator.parse(payload, SleepSchema.class);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
     public void handle(JsonNode payload) throws Exception {
 
-        JsonNode sleepTime = payload.path("ms");
-        if(sleepTime.isMissingNode()) {
-            throw new RuntimeException("Sleep job was not given a sleep time");
+        SleepSchema sleep = JsonValidator.parse(payload, SleepSchema.class);
+
+        if(sleep.ms() < 0) {
+            throw new InvalidPayloadException("Sleep ms must be >= 0");
         }
-        if(!sleepTime.canConvertToInt()) {
-            throw new RuntimeException("Invalid sleep value");
-        }
+
         System.out.printf("""
                 Thread %s sleeping for %f seconds...
-                """, Thread.currentThread().getName(), (1.0)*sleepTime.intValue()/1000);
-        Thread.sleep(sleepTime.intValue());
+                """, Thread.currentThread().getName(), (1.0)* sleep.ms()/1000);
+        Thread.sleep(sleep.ms());
     }
 }

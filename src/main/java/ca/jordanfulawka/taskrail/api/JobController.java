@@ -3,6 +3,7 @@ package ca.jordanfulawka.taskrail.api;
 import ca.jordanfulawka.taskrail.core.HandlerRegistry;
 import ca.jordanfulawka.taskrail.core.Job;
 import ca.jordanfulawka.taskrail.core.JobStatus;
+import ca.jordanfulawka.taskrail.handlers.JobHandler;
 import ca.jordanfulawka.taskrail.persistence.JobRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,11 @@ public class JobController {
         if(!handlerRegistry.supports(job.type())) {
             return ResponseEntity.badRequest().build();
         }
+        JobHandler jobHandler = handlerRegistry.get(job.type());
+        if(!jobHandler.validate(job.payload())) {
+            return ResponseEntity.badRequest().build();
+        }
+        
         Job newJob = jobRepository.insert(job.type(), job.payload(), job.runAt());
         return ResponseEntity.ok(newJob.id());
     }

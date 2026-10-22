@@ -2,10 +2,7 @@ package ca.jordanfulawka.taskrail.config;
 
 import ca.jordanfulawka.taskrail.core.HandlerRegistry;
 import ca.jordanfulawka.taskrail.core.Worker;
-import ca.jordanfulawka.taskrail.handlers.EmailHandler;
-import ca.jordanfulawka.taskrail.handlers.FlakyHandler;
-import ca.jordanfulawka.taskrail.handlers.JobHandler;
-import ca.jordanfulawka.taskrail.handlers.SleepHandler;
+import ca.jordanfulawka.taskrail.handlers.*;
 import ca.jordanfulawka.taskrail.persistence.JobRepository;
 import ca.jordanfulawka.taskrail.persistence.JobRunRepository;
 import org.springframework.context.annotation.Bean;
@@ -34,6 +31,11 @@ public class TaskrailConfig {
     @Bean
     public EmailHandler emailHandler() {
         return new EmailHandler();
+    }
+
+    @Bean
+    public WebhookHandler webhookHandler() {
+        return new WebhookHandler();
     }
 
     @Bean(initMethod = "start", destroyMethod = "stop")

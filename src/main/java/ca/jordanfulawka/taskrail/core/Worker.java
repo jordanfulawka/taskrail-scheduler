@@ -73,8 +73,9 @@ public class Worker {
     }
 
     private void jobHandler(Job job) {
-        long jobRunId = jobRunRepository.startRun(job.id(), job.attempts(), workerName);
+        long jobRunId = -1;
         try {
+            jobRunId = jobRunRepository.startRun(job.id(), job.attempts(), workerName);
             handlerRegistry.get(job.type()).handle(job.payload());
             jobRepository.markSucceeded(job.id(), workerName, jobRunId);
             System.out.println("ID " + job.id() + ": Job of type " + job.type() + " has completed");
@@ -86,6 +87,7 @@ public class Worker {
             jobRepository.markPending(job.id(), e.getMessage(), workerName, jobRunId);
         } catch (Exception e) {
             System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has had an unknown failure " + e.getMessage());
+            jobRepository.markPending(job.id(), e.getMessage(), workerName, jobRunId);
         }  finally {
             semaphore.release();
         }

@@ -1,8 +1,12 @@
 package ca.jordanfulawka.taskrail.handlers;
 
+import ca.jordanfulawka.taskrail.exceptions.InvalidPayloadException;
+import ca.jordanfulawka.taskrail.exceptions.RetryableJobException;
 import tools.jackson.databind.JsonNode;
 
 import java.util.Random;
+
+record FlakySchema(double failRate) {};
 
 public class FlakyHandler implements JobHandler {
 
@@ -12,21 +16,29 @@ public class FlakyHandler implements JobHandler {
     }
 
     @Override
+    public boolean validate(JsonNode payload) {
+        try {
+            JsonValidator.parse(payload, FlakySchema.class);
+            return true;
+        } catch (InvalidPayloadException e) {
+            return false;
+        }
+    }
+
+    @Override
     public void handle(JsonNode payload) throws Exception {
 
-        JsonNode failRate = payload.path("failRate");
-        if(failRate.isMissingNode()) {
-            throw new RuntimeException("failRate parameter not given");
-        }
-        if(!failRate.isNumber()) {
-            throw new RuntimeException("Invalid payload type");
+        FlakySchema flaky = JsonValidator.parse(payload, FlakySchema.class);
+
+        if(flaky.failRate() < 0) {
+            throw new InvalidPayloadException("Failrate must be >= 0)");
         }
 
         Random random = new Random();
-        int randomValue = random.nextInt();
+        int randomValue = random.nextInt(100);
 
-        if(randomValue < failRate.doubleValue() * 100) {
-            throw new RuntimeException("Flaky is throwing a controlled exception");
+        if(randomValue < flaky.failRate() * 100) {
+            throw new RetryableJobException("Flaky is throwing a controlled exception");
         }
     }
 }
