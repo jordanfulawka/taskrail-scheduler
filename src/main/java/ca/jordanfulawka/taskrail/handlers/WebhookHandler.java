@@ -11,8 +11,8 @@ public class WebhookHandler implements JobHandler {
     }
 
     @Override
-    public boolean validate(JsonNode payload) {
-        return false;
+    public void validate(JsonNode payload) {
+        // TODO
     }
 
     @Override

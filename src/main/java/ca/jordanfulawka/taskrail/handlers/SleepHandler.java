@@ -13,13 +13,8 @@ public class SleepHandler implements JobHandler {
     }
 
     @Override
-    public boolean validate(JsonNode payload) {
-        try {
-            JsonValidator.parse(payload, SleepSchema.class);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    public void validate(JsonNode payload) {
+        JsonValidator.parse(payload, SleepSchema.class);
     }
 
     @Override

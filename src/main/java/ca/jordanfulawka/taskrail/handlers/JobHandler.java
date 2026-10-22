@@ -6,7 +6,7 @@ public interface JobHandler {
 
     String type();
 
-    boolean validate(JsonNode payload);
+    void validate(JsonNode payload);
 
     void handle(JsonNode payload) throws Exception;
 

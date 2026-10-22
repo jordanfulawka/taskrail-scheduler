@@ -16,13 +16,8 @@ public class FlakyHandler implements JobHandler {
     }
 
     @Override
-    public boolean validate(JsonNode payload) {
-        try {
-            JsonValidator.parse(payload, FlakySchema.class);
-            return true;
-        } catch (InvalidPayloadException e) {
-            return false;
-        }
+    public void validate(JsonNode payload) {
+        JsonValidator.parse(payload, FlakySchema.class);
     }
 
     @Override

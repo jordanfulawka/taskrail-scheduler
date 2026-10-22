@@ -16,13 +16,8 @@ public class EmailHandler implements JobHandler {
         return "email";
     }
 
-    public boolean validate(JsonNode payload) {
-        try {
-            JsonValidator.parse(payload, EmailSchema.class);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    public void validate(JsonNode payload) {
+        JsonValidator.parse(payload, EmailSchema.class);
     }
 
     @Override

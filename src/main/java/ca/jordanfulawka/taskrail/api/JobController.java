@@ -3,6 +3,7 @@ package ca.jordanfulawka.taskrail.api;
 import ca.jordanfulawka.taskrail.core.HandlerRegistry;
 import ca.jordanfulawka.taskrail.core.Job;
 import ca.jordanfulawka.taskrail.core.JobStatus;
+import ca.jordanfulawka.taskrail.exceptions.InvalidPayloadException;
 import ca.jordanfulawka.taskrail.handlers.JobHandler;
 import ca.jordanfulawka.taskrail.persistence.JobRepository;
 import org.springframework.http.ResponseEntity;
@@ -28,11 +29,21 @@ public class JobController {
         if(!handlerRegistry.supports(job.type())) {
             return ResponseEntity.badRequest().build();
         }
-        JobHandler jobHandler = handlerRegistry.get(job.type());
-        if(!jobHandler.validate(job.payload())) {
+        if(job.type() == null || job.payload() == null) {
             return ResponseEntity.badRequest().build();
         }
-        
+        JobHandler jobHandler = handlerRegistry.get(job.type());
+//        if(!jobHandler.validate(job.payload())) {
+//            return ResponseEntity.badRequest().build();
+//        }
+        try {
+            jobHandler.validate(job.payload());
+        } catch(InvalidPayloadException e) {
+            System.out.println("Validation failed: " + e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+
+
         Job newJob = jobRepository.insert(job.type(), job.payload(), job.runAt());
         return ResponseEntity.ok(newJob.id());
     }
