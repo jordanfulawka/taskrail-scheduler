@@ -1,6 +1,7 @@
 package ca.jordanfulawka.taskrail.config;
 
 import ca.jordanfulawka.taskrail.core.HandlerRegistry;
+import ca.jordanfulawka.taskrail.core.LeaseReaper;
 import ca.jordanfulawka.taskrail.core.Worker;
 import ca.jordanfulawka.taskrail.handlers.*;
 import ca.jordanfulawka.taskrail.persistence.JobRepository;
@@ -41,6 +42,11 @@ public class TaskrailConfig {
     @Bean(initMethod = "start", destroyMethod = "stop")
     public Worker worker(JobRepository jobRepository, JobRunRepository jobRunRepository, HandlerRegistry handlerRegistry) {
         return new Worker(jobRepository, jobRunRepository,handlerRegistry, 3);
+    }
+
+    @Bean(initMethod = "start", destroyMethod = "stop")
+    public LeaseReaper leaseReaper(JobRepository jobRepository) {
+        return new LeaseReaper(jobRepository);
     }
 
 

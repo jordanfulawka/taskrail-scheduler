@@ -24,7 +24,6 @@ public final class JsonValidator {
         try {
             return jsonBuilder.treeToValue(jsonNode, targetClass);
         } catch (JacksonException e) {
-//            System.out.println("Validation failed: " + e.getMessage());
             throw new InvalidPayloadException(e.getMessage());
         }
     }
