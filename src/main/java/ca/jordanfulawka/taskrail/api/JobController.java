@@ -33,9 +33,7 @@ public class JobController {
             return ResponseEntity.badRequest().build();
         }
         JobHandler jobHandler = handlerRegistry.get(job.type());
-//        if(!jobHandler.validate(job.payload())) {
-//            return ResponseEntity.badRequest().build();
-//        }
+
         try {
             jobHandler.validate(job.payload());
         } catch(InvalidPayloadException e) {

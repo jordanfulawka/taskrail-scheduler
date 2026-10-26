@@ -29,4 +29,12 @@ public class JobRunRepository {
                         "SET finished_at = now(), outcome = ?, error_message = ?, error_type = ? WHERE id = ?",
                 outcome.name(), errorMessage, errorType,id);
     }
+
+    public void updateReapedRun(long jobId, JobStatus outcome, String errorMessage, String errorType) {
+        jdbcTemplate.update("""
+                UPDATE job_runs_log
+                SET finished_at = now(), outcome = ?, error_message = ?, error_type = ?
+                WHERE job_id = ? AND finished_at IS NULL
+                """, outcome.name(), errorMessage, errorType, jobId);
+    }
 }

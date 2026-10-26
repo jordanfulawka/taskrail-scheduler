@@ -38,7 +38,6 @@ public class Worker {
     }
 
     public void stop() {
-
         try {
             scheduler.shutdown();
             jobPool.shutdown();
@@ -52,7 +51,6 @@ public class Worker {
     }
 
     private void poll() {
-
         try {
             if(semaphore.tryAcquire()) {
                 Optional<Job> job = jobRepository.claimNext(workerName);
@@ -61,6 +59,8 @@ public class Worker {
                         jobPool.execute(() -> jobHandler(job.get()));
                     } catch (RuntimeException e) {
                         System.out.println(e.getMessage());
+                    } finally {
+                        semaphore.release();
                     }
                 } else {
                     semaphore.release();
@@ -83,8 +83,13 @@ public class Worker {
             System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed permanently. " + e.getMessage());
             jobRepository.markFailed(job.id(), e.getMessage(), workerName, jobRunId);
         } catch (RetryableJobException e) {
-            System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed temporarily. " + e.getMessage());
-            jobRepository.markPending(job.id(), e.getMessage(), workerName, jobRunId);
+            if(job.attempts() < 3) {
+                System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed temporarily. " + e.getMessage());
+                jobRepository.markPending(job.id(), e.getMessage(), workerName, jobRunId);
+            } else {
+                System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has failed temporarily too many times. Job set to failed " + e.getMessage());
+                jobRepository.markFailed(job.id(), e.getMessage(), workerName, jobRunId);
+            }
         } catch (Exception e) {
             System.err.println("ID " + job.id() + ": Job of type " + job.type() + " has had an unknown failure " + e.getMessage());
             jobRepository.markPending(job.id(), e.getMessage(), workerName, jobRunId);

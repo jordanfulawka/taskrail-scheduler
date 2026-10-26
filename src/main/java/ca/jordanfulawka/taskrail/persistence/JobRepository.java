@@ -78,9 +78,33 @@ public class JobRepository {
 
     @Transactional
     public void markPending(long id, String lastError, String workerName, long jobRunId) {
-        jdbcTemplate.update("UPDATE jobs SET status = 'PENDING', updated_at = now(), last_error = ? " +
+        jdbcTemplate.update("UPDATE jobs SET status = 'PENDING', run_at = now() + interval '1 second' * 2^attempts, updated_at = now(), last_error = ? " +
                 "WHERE id = ? and locked_by = ?", lastError, id, workerName);
         jobRunRepository.updateRun(jobRunId, JobStatus.FAILED, lastError, "TEMPORARY");
+    }
+
+    @Transactional
+    public List<Long> reapRunningJobs() {
+        List<Long> expiredIds = jdbcTemplate.queryForList("""
+                UPDATE jobs
+                SET status =
+                CASE
+                    WHEN attempts < max_attempts THEN 'PENDING'
+                    ELSE 'FAILED'
+                END,
+                locked_until = null, locked_by = null, updated_at = now(), last_error = 'lease expired', run_at = 
+                CASE
+                    WHEN attempts < max_attempts THEN now() + interval '1 minute'
+                    ELSE run_at
+                END
+                WHERE status = 'RUNNING' AND locked_until < now() RETURNING id
+                """, Long.class);
+        if(expiredIds.isEmpty()) return expiredIds;
+
+        for(Long id : expiredIds) {
+            jobRunRepository.updateReapedRun(id, JobStatus.FAILED, "Lease expired", "LEASE_EXPIRED");
+        }
+        return expiredIds;
     }
 
     public Optional<Job> claimNext(String workerName) {
